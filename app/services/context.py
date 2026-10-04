@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.enums import DelayCategory, TimeOfDay
+from app.enums import DelayCategory, RiskLevel, TimeOfDay
 
 
 def delay_category(minutes: int) -> DelayCategory:
@@ -33,3 +33,20 @@ def format_minutes(minutes: int) -> str:
     return f"{minutes} {word}"
 
 
+RISK_WARNINGS = {
+    RiskLevel.LOW: None,
+    RiskLevel.MEDIUM: "Вы уже опаздывали на этой неделе — выбирайте оправдание аккуратнее.",
+    RiskLevel.HIGH: (
+        "Слишком много опозданий за неделю: преподаватель может не поверить. "
+        "Подобраны только самые убедительные варианты — а лучше просто приходите вовремя."
+    ),
+}
+
+
+def risk_level(lateness_last_week: int) -> RiskLevel:
+    """Уровень риска по числу опозданий за последние 7 дней (не считая текущего)."""
+    if lateness_last_week < 2:
+        return RiskLevel.LOW
+    if lateness_last_week < 4:
+        return RiskLevel.MEDIUM
+    return RiskLevel.HIGH

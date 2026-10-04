@@ -2,10 +2,12 @@ from datetime import datetime
 
 import pytest
 
-from app.enums import DelayCategory, TimeOfDay
+from app.enums import DelayCategory, RiskLevel, TimeOfDay
 from app.services.context import (
+    RISK_WARNINGS,
     delay_category,
     format_minutes,
+    risk_level,
     time_of_day,
 )
 
@@ -60,3 +62,22 @@ def test_format_minutes_declension(minutes, expected):
     assert format_minutes(minutes) == expected
 
 
+@pytest.mark.parametrize(
+    ("count", "expected"),
+    [
+        (0, RiskLevel.LOW),
+        (1, RiskLevel.LOW),
+        (2, RiskLevel.MEDIUM),
+        (3, RiskLevel.MEDIUM),
+        (4, RiskLevel.HIGH),
+        (10, RiskLevel.HIGH),
+    ],
+)
+def test_risk_level_by_weekly_count(count, expected):
+    assert risk_level(count) == expected
+
+
+def test_only_low_risk_has_no_warning():
+    assert RISK_WARNINGS[RiskLevel.LOW] is None
+    assert RISK_WARNINGS[RiskLevel.MEDIUM]
+    assert RISK_WARNINGS[RiskLevel.HIGH]
