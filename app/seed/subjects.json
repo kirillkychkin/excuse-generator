@@ -1,0 +1,14 @@
+[
+  {"name": "Программирование на Python", "category": "programming"},
+  {"name": "Алгоритмы и структуры данных", "category": "programming"},
+  {"name": "Базы данных", "category": "programming"},
+  {"name": "Математический анализ", "category": "math"},
+  {"name": "Линейная алгебра", "category": "math"},
+  {"name": "Теория вероятностей", "category": "math"},
+  {"name": "Физическая культура", "category": "pe"},
+  {"name": "История России", "category": "humanities"},
+  {"name": "Философия", "category": "humanities"},
+  {"name": "Иностранный язык", "category": "humanities"},
+  {"name": "Физика", "category": "science"},
+  {"name": "Химия", "category": "science"}
+]
