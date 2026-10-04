@@ -2,6 +2,7 @@ import os
 from collections.abc import Iterator
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.engine import Engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -9,7 +10,9 @@ from sqlalchemy.pool import StaticPool
 
 from app import models  # noqa: F401  — регистрирует модели в Base.metadata
 from app.config import Settings
-from app.db import Base
+from app.db import Base, get_session
+from app.main import create_app
+from app.seed.seed import seed
 
 
 @pytest.fixture
@@ -34,3 +37,17 @@ def engine() -> Iterator[Engine]:
 def session(engine: Engine) -> Iterator[Session]:
     with sessionmaker(bind=engine, expire_on_commit=False)() as session:
         yield session
+
+
+@pytest.fixture
+def seeded_session(session: Session) -> Session:
+    seed(session)
+    return session
+
+
+@pytest.fixture
+def client(seeded_session: Session) -> Iterator[TestClient]:
+    app = create_app()
+    app.dependency_overrides[get_session] = lambda: seeded_session
+    with TestClient(app) as client:
+        yield client
