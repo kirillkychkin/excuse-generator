@@ -11,6 +11,7 @@ from app.schemas import (
     FeedbackRequest,
     GenerateRequest,
     HistoryItemOut,
+    StatsOut,
     SubjectOut,
     UserCreate,
     UserOut,
@@ -80,3 +81,9 @@ def user_history(username: str, session: SessionDep):
 def feedback(item_id: int, data: FeedbackRequest, session: SessionDep):
     """Отметить, сработало ли оправдание; оценка влияет на следующие генерации."""
     return excuses.set_feedback(session, item_id, data.worked)
+
+
+@router.get("/users/{username}/stats", response_model=StatsOut, tags=["users"])
+def user_stats(username: str, session: SessionDep):
+    """Статистика опозданий: всего, за неделю, среднее время, любимая тема, доля успеха."""
+    return excuses.get_stats(session, username)
