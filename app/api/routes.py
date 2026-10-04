@@ -4,15 +4,20 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app import repositories as repo
+from app.config import Settings, get_settings
 from app.db import get_session
 from app.schemas import (
+    ExcuseOut,
+    GenerateRequest,
     SubjectOut,
     UserCreate,
     UserOut,
 )
+from app.services import excuses
 
 router = APIRouter(prefix="/api")
 SessionDep = Annotated[Session, Depends(get_session)]
+SettingsDep = Annotated[Settings, Depends(get_settings)]
 
 
 @router.get("/subjects", response_model=list[SubjectOut], tags=["subjects"])
@@ -41,3 +46,19 @@ def get_user(username: str, session: SessionDep):
     if user is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Пользователь не найден")
     return user
+
+
+@router.post("/excuses/generate", response_model=ExcuseOut, tags=["excuses"])
+def generate_excuse(data: GenerateRequest, session: SessionDep, settings: SettingsDep):
+    """Подбирает оправдание с учётом предмета, времени опоздания и истории пользователя.
+
+    Пользователь создаётся автоматически при первой генерации.
+    """
+    return excuses.generate_excuse(
+        session,
+        username=data.username,
+        subject_name=data.subject,
+        delay_minutes=data.delay_minutes,
+        tz=settings.tz,
+        at=data.at,
+    )
