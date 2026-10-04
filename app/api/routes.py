@@ -8,7 +8,9 @@ from app.config import Settings, get_settings
 from app.db import get_session
 from app.schemas import (
     ExcuseOut,
+    FeedbackRequest,
     GenerateRequest,
+    HistoryItemOut,
     SubjectOut,
     UserCreate,
     UserOut,
@@ -62,3 +64,19 @@ def generate_excuse(data: GenerateRequest, session: SessionDep, settings: Settin
         tz=settings.tz,
         at=data.at,
     )
+
+
+@router.get(
+    "/users/{username}/history",
+    response_model=list[HistoryItemOut],
+    tags=["history"],
+)
+def user_history(username: str, session: SessionDep):
+    """История оправданий пользователя, от новых к старым."""
+    return excuses.get_history(session, username)
+
+
+@router.post("/history/{item_id}/feedback", response_model=HistoryItemOut, tags=["history"])
+def feedback(item_id: int, data: FeedbackRequest, session: SessionDep):
+    """Отметить, сработало ли оправдание; оценка влияет на следующие генерации."""
+    return excuses.set_feedback(session, item_id, data.worked)
