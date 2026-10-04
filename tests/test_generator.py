@@ -180,6 +180,14 @@ class TestTemplateWeight:
 
         assert weight == pytest.approx(0.1)
 
+    def test_medium_risk_prefers_credible_templates(self):
+        ctx = make_ctx(risk_level=RiskLevel.MEDIUM)
+
+        credible = template_weight(make_template(1, credibility=5), ctx)
+        doubtful = template_weight(make_template(2, credibility=1), ctx)
+
+        assert credible > doubtful
+
 
 class TestGenerate:
     def test_renders_placeholders(self):

@@ -6,7 +6,7 @@
 import random
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from app.enums import RiskLevel, TimeOfDay
 from app.services.context import format_minutes
@@ -118,6 +118,11 @@ def template_weight(
         weight *= template.credibility / 3
 
     return weight
+
+def lateness_last_week(history: Sequence[HistoryEntry], now: datetime) -> int:
+    """Сколько раз пользователь опаздывал за последние 7 дней."""
+    week_ago = now - timedelta(days=7)
+    return sum(1 for entry in history if entry.created_at >= week_ago)
 
 
 @dataclass(frozen=True)
