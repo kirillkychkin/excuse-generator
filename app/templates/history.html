@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}История — {{ username }}{% endblock %}
+{% block content %}
+<section class="card">
+  <h2>{{ username }}: статистика опозданий</h2>
+  <div class="stats">
+    <div class="stat"><b>{{ stats.total }}</b><span>всего опозданий</span></div>
+    <div class="stat"><b>{{ stats.last_week }}</b><span>за последние 7 дней</span></div>
+    <div class="stat"><b>{{ stats.average_delay if stats.average_delay is not none else "—" }}</b><span>минут в среднем</span></div>
+    <div class="stat"><b>{{ stats.favorite_theme | theme if stats.favorite_theme else "—" }}</b><span>любимая тема</span></div>
+    <div class="stat"><b>{{ "%d%%" % (stats.success_rate * 100) if stats.success_rate is not none else "—" }}</b><span>оправданий сработало</span></div>
+  </div>
+</section>
+
+<section class="card">
+  {% if history %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Когда (UTC)</th><th>Предмет</th><th>Мин.</th><th>Оправдание</th><th>Итог</th></tr>
+      </thead>
+      <tbody>
+        {% for item in history %}
+        <tr>
+          <td>{{ item.created_at.strftime("%d.%m %H:%M") }}</td>
+          <td>{{ item.subject }}</td>
+          <td>{{ item.delay_minutes }}</td>
+          <td>{{ item.text }}<br><small class="meta">{{ item.theme | theme }}</small></td>
+          <td>
+            {% if item.worked is true %}<span class="yes">сработало</span>
+            {% elif item.worked is false %}не сработало
+            {% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p>Опозданий пока не было. <a href="/">Придумать первое оправдание</a></p>
+  {% endif %}
+</section>
+{% endblock %}
