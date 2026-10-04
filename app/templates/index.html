@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="card">
+  <p>Опоздали на пару? Укажите, на какой предмет и на сколько минут, — приложение подберёт
+    оправдание с учётом ваших прошлых опозданий.</p>
+  <form class="grid" method="post" action="/generate">
+    <label>Ваше имя
+      <input name="username" value="{{ form.username }}" minlength="2" maxlength="50" required>
+    </label>
+    <label>Предмет
+      <select name="subject" required>
+        {% for subject in subjects %}
+        <option value="{{ subject.name }}" {% if subject.name == form.subject %}selected{% endif %}>{{ subject.name }}</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>Опоздание, минут
+      <input name="delay_minutes" type="number" min="1" max="180" value="{{ form.delay_minutes }}" required>
+    </label>
+    {% if error %}<p class="error">{{ error }}</p>{% endif %}
+    <button type="submit">{% if result %}Другое оправдание{% else %}Придумать оправдание{% endif %}</button>
+  </form>
+</section>
+
+{% if result %}
+<section class="card" id="result">
+  <p class="excuse">«{{ result.text }}»</p>
+  <div class="meta">
+    <span>Тема: {{ result.theme | theme }}</span>
+    <span>Убедительность: {{ "★" * result.credibility }}{{ "☆" * (5 - result.credibility) }}</span>
+    <span>Опоздание: {{ result.delay_category | delay }}</span>
+    <span>Риск: {{ result.risk_level | risk }} (опозданий за неделю: {{ result.lateness_last_week }})</span>
+  </div>
+  {% if result.warning %}<p class="warning">{{ result.warning }}</p>{% endif %}
+</section>
+{% endif %}
+{% endblock %}
