@@ -14,6 +14,8 @@ HIGH_RISK_MIN_CREDIBILITY = 4
 RECENT_THEMES_LIMIT = 3
 RECENT_THEME_PENALTY = 0.3
 SAME_SUBJECT_PENALTY = 0.2
+WORKED_BONUS = 1.5
+FAILED_PENALTY = 0.1
 
 
 @dataclass(frozen=True)
@@ -98,4 +100,19 @@ def template_weight(
         for entry in history
     ):
         weight *= SAME_SUBJECT_PENALTY
+
+    # Учитываем последнюю оценку пользователя: «сработало» или «не сработало»
+    feedback = next(
+        (e.worked for e in history if e.template_id == template.id and e.worked is not None),
+        None,
+    )
+    if feedback is True:
+        weight *= WORKED_BONUS
+    elif feedback is False:
+        weight *= FAILED_PENALTY
+
+    # При частых опозданиях убедительность важнее разнообразия
+    if ctx.risk_level != RiskLevel.LOW:
+        weight *= template.credibility / 3
+
     return weight

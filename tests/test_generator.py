@@ -158,3 +158,20 @@ class TestTemplateWeight:
         history = [make_entry(i, theme="health") for i in (10, 11, 12)]
         history += [make_entry(1, subject_name="Физика", worked=w) for w in worked_values]
         return history
+
+    def test_worked_feedback_increases_weight(self):
+        weight = template_weight(make_template(1), make_ctx(), self._feedback_history(True))
+
+        assert weight == pytest.approx(1.5)
+
+    def test_failed_feedback_decreases_weight(self):
+        weight = template_weight(make_template(1), make_ctx(), self._feedback_history(False))
+
+        assert weight == pytest.approx(0.1)
+
+    def test_latest_feedback_wins(self):
+        history = self._feedback_history(None, False, True)
+
+        weight = template_weight(make_template(1), make_ctx(), history)
+
+        assert weight == pytest.approx(0.1)
