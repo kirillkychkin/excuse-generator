@@ -1,8 +1,8 @@
 from typing import Annotated
 from urllib.parse import quote, unquote
 
-from fastapi import APIRouter, Cookie, Depends, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Cookie, Depends, Form, HTTPException, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -73,3 +73,13 @@ def generate(
     # Кириллицу в cookie нужно кодировать
     response.set_cookie(USERNAME_COOKIE, quote(data.username), max_age=365 * 24 * 3600)
     return response
+
+
+@router.post("/feedback/{item_id}")
+def feedback(item_id: int, worked: Annotated[bool, Form()], session: SessionDep):
+    try:
+        excuses.set_feedback(session, item_id, worked)
+    except NotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    username = repo.get_history_item(session, item_id).user.username
+    return RedirectResponse(f"/history/{quote(username)}", status_code=status.HTTP_303_SEE_OTHER)

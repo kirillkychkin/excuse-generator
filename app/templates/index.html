@@ -32,6 +32,16 @@
     <span>Риск: {{ result.risk_level | risk }} (опозданий за неделю: {{ result.lateness_last_week }})</span>
   </div>
   {% if result.warning %}<p class="warning">{{ result.warning }}</p>{% endif %}
+  <div class="actions">
+    <form method="post" action="/feedback/{{ result.history_id }}">
+      <input type="hidden" name="worked" value="true">
+      <button type="submit" class="secondary">👍 Сработало</button>
+    </form>
+    <form method="post" action="/feedback/{{ result.history_id }}">
+      <input type="hidden" name="worked" value="false">
+      <button type="submit" class="secondary">👎 Не сработало</button>
+    </form>
+  </div>
 </section>
 {% endif %}
 {% endblock %}
