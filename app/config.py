@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     database_url: str = "sqlite:///./excuses.db"
     debug: bool = False
+    # Версия (git-коммит) задаётся при сборке Docker-образа
+    app_version: str = "dev"
     # Часовой пояс университета: по нему определяется время суток опоздания
     timezone: str = "Asia/Yakutsk"
 

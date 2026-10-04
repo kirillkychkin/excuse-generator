@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api.routes import router as api_router
+from app.config import get_settings
 from app.services.excuses import NotFoundError
 from app.services.generator import NoTemplatesError
 from app.web.routes import router as web_router
@@ -26,7 +27,7 @@ def create_app() -> FastAPI:
 
     @app.get("/health", tags=["service"])
     def health() -> dict[str, str]:
-        return {"status": "ok"}
+        return {"status": "ok", "version": get_settings().app_version}
 
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
     app.include_router(api_router)
