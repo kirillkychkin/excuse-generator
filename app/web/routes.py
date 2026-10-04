@@ -83,3 +83,17 @@ def feedback(item_id: int, worked: Annotated[bool, Form()], session: SessionDep)
         raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
     username = repo.get_history_item(session, item_id).user.username
     return RedirectResponse(f"/history/{quote(username)}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+@router.get("/history/{username}", response_class=HTMLResponse)
+def history(request: Request, username: str, session: SessionDep):
+    try:
+        stats = excuses.get_stats(session, username)
+        items = excuses.get_history(session, username)
+    except NotFoundError as exc:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(exc)) from exc
+    return templates.TemplateResponse(
+        request,
+        "history.html",
+        {"username": username, "stats": stats, "history": items},
+    )
