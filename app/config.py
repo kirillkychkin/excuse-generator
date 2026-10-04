@@ -35,6 +35,7 @@ class Settings(BaseSettings):
     def tz(self) -> ZoneInfo:
         return ZoneInfo(self.timezone)
 
+
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
