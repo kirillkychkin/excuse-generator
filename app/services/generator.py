@@ -3,11 +3,13 @@
 Модуль не зависит от БД: шаблоны и история передаются простыми dataclass-объектами,
 а генератор случайных чисел — параметром, поэтому логику легко тестировать.
 """
+import random
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from datetime import datetime
 
 from app.enums import RiskLevel, TimeOfDay
+from app.services.context import format_minutes
 
 RECENT_TEMPLATES_LIMIT = 5
 HIGH_RISK_MIN_CREDIBILITY = 4
@@ -116,3 +118,38 @@ def template_weight(
         weight *= template.credibility / 3
 
     return weight
+
+
+@dataclass(frozen=True)
+class GeneratedExcuse:
+    template: TemplateData
+    text: str
+
+
+class NoTemplatesError(Exception):
+    """В базе нет ни одного шаблона оправдания."""
+
+
+def render(template: TemplateData, ctx: ExcuseContext, rng: random.Random) -> str:
+    """Подставляет в шаблон время опоздания, предмет и случайный номер автобуса."""
+    return template.text.format(
+        minutes=format_minutes(ctx.delay_minutes),
+        subject=ctx.subject_name,
+        bus=rng.randint(1, 99),
+    )
+
+
+def generate(
+    templates: Sequence[TemplateData],
+    ctx: ExcuseContext,
+    history: Sequence[HistoryEntry] = (),
+    rng: random.Random | None = None,
+) -> GeneratedExcuse:
+    """Выбирает оправдание взвешенным случайным выбором среди подходящих шаблонов."""
+    rng = rng or random.Random()
+    candidates = filter_candidates(templates, ctx, history)
+    if not candidates:
+        raise NoTemplatesError("Нет шаблонов оправданий — заполните базу командой seed")
+    weights = [template_weight(t, ctx, history) for t in candidates]
+    chosen = rng.choices(candidates, weights=weights, k=1)[0]
+    return GeneratedExcuse(template=chosen, text=render(chosen, ctx, rng))

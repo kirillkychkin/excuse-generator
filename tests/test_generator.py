@@ -1,3 +1,5 @@
+
+import random
 from datetime import datetime, timedelta
 
 import pytest
@@ -6,8 +8,10 @@ from app.enums import RiskLevel, TimeOfDay
 from app.services.generator import (
     ExcuseContext,
     HistoryEntry,
+    NoTemplatesError,
     TemplateData,
     filter_candidates,
+    generate,
     template_weight,
 )
 
@@ -175,3 +179,45 @@ class TestTemplateWeight:
         weight = template_weight(make_template(1), make_ctx(), history)
 
         assert weight == pytest.approx(0.1)
+
+
+class TestGenerate:
+    def test_renders_placeholders(self):
+        template = make_template(1, text="Опоздал на {minutes} на «{subject}», автобус №{bus}")
+
+        result = generate([template], make_ctx(delay_minutes=21), rng=random.Random(0))
+
+        assert result.template == template
+        assert result.text.startswith("Опоздал на 21 минуту на «Философия», автобус №")
+        assert "{" not in result.text
+
+    def test_is_deterministic_with_seeded_rng(self):
+        templates = [make_template(i) for i in range(1, 20)]
+
+        first = generate(templates, make_ctx(), rng=random.Random(42))
+        second = generate(templates, make_ctx(), rng=random.Random(42))
+
+        assert first == second
+
+    def test_never_picks_recent_template_when_alternatives_exist(self):
+        templates = [make_template(i) for i in range(1, 4)]
+        history = [make_entry(1), make_entry(2)]
+
+        for seed in range(50):
+            result = generate(templates, make_ctx(), history, rng=random.Random(seed))
+            assert result.template.id == 3
+
+    def test_prefers_template_with_higher_weight(self):
+        templates = [make_template(1, theme="transport"), make_template(2, theme="health")]
+        history = [make_entry(10, theme="transport")]
+
+        picks = [
+            generate(templates, make_ctx(), history, rng=random.Random(seed)).template.id
+            for seed in range(200)
+        ]
+
+        assert picks.count(2) > picks.count(1) * 2
+
+    def test_raises_without_templates(self):
+        with pytest.raises(NoTemplatesError):
+            generate([], make_ctx())
