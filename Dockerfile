@@ -16,6 +16,7 @@ RUN pip install .
 
 COPY alembic.ini ./
 COPY alembic ./alembic
+COPY entrypoint.sh ./
 
 RUN chown -R appuser /app
 USER appuser
@@ -24,4 +25,4 @@ EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=20s \
     CMD python -c "import os, urllib.request; urllib.request.urlopen(f'http://localhost:{os.environ[\"PORT\"]}/health')"
 
-CMD ["sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT}"]
+CMD ["sh", "./entrypoint.sh"]
