@@ -1,11 +1,11 @@
 name: CD
 
-# Запускается после успешного CI в ветке main
+# Запускается после успешного CI в ветке master
 on:
   workflow_run:
     workflows: [CI]
     types: [completed]
-    branches: [main]
+    branches: [master]
   workflow_dispatch:
 
 env:
