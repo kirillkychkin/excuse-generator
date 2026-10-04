@@ -12,6 +12,7 @@ from app.services.generator import (
     TemplateData,
     filter_candidates,
     generate,
+    lateness_last_week,
     template_weight,
 )
 
@@ -187,6 +188,16 @@ class TestTemplateWeight:
         doubtful = template_weight(make_template(2, credibility=1), ctx)
 
         assert credible > doubtful
+
+
+def test_lateness_last_week_counts_only_recent_entries():
+    history = [
+        make_entry(1, created_at=NOW - timedelta(days=1)),
+        make_entry(2, created_at=NOW - timedelta(days=6, hours=23)),
+        make_entry(3, created_at=NOW - timedelta(days=8)),
+    ]
+
+    assert lateness_last_week(history, NOW) == 2
 
 
 class TestGenerate:
