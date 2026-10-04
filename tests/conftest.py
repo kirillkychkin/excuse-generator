@@ -10,6 +10,7 @@ from sqlalchemy.pool import StaticPool
 from app import models  # noqa: F401  — регистрирует модели в Base.metadata
 from app.config import Settings
 from app.db import Base
+from app.seed.seed import seed
 
 
 @pytest.fixture
@@ -34,3 +35,9 @@ def engine() -> Iterator[Engine]:
 def session(engine: Engine) -> Iterator[Session]:
     with sessionmaker(bind=engine, expire_on_commit=False)() as session:
         yield session
+
+
+@pytest.fixture
+def seeded_session(session: Session) -> Session:
+    seed(session)
+    return session
