@@ -3,6 +3,7 @@
 Модуль не зависит от БД: шаблоны и история передаются простыми dataclass-объектами,
 а генератор случайных чисел — параметром, поэтому логику легко тестировать.
 """
+
 import random
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
@@ -118,6 +119,7 @@ def template_weight(
         weight *= template.credibility / 3
 
     return weight
+
 
 def lateness_last_week(history: Sequence[HistoryEntry], now: datetime) -> int:
     """Сколько раз пользователь опаздывал за последние 7 дней."""
