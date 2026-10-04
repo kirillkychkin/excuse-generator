@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
+from app.api.routes import router as api_router
 from app.services.excuses import NotFoundError
 from app.services.generator import NoTemplatesError
 
@@ -24,6 +25,7 @@ def create_app() -> FastAPI:
     def health() -> dict[str, str]:
         return {"status": "ok"}
 
+    app.include_router(api_router)
     return app
 
 
