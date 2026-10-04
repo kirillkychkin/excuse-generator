@@ -11,6 +11,9 @@ from app.enums import RiskLevel, TimeOfDay
 
 RECENT_TEMPLATES_LIMIT = 5
 HIGH_RISK_MIN_CREDIBILITY = 4
+RECENT_THEMES_LIMIT = 3
+RECENT_THEME_PENALTY = 0.3
+SAME_SUBJECT_PENALTY = 0.2
 
 
 @dataclass(frozen=True)
@@ -75,3 +78,24 @@ def filter_candidates(
         if candidates:
             return candidates
     return []
+
+
+def template_weight(
+    template: TemplateData,
+    ctx: ExcuseContext,
+    history: Sequence[HistoryEntry] = (),
+) -> float:
+    """Вес шаблона при случайном выборе: чем больше, тем вероятнее выбор."""
+    weight = template.base_weight
+
+    recent_themes = {entry.theme for entry in history[:RECENT_THEMES_LIMIT]}
+    if template.theme in recent_themes:
+        weight *= RECENT_THEME_PENALTY
+
+    # Преподаватель этого предмета уже слышал такое оправдание
+    if any(
+        entry.template_id == template.id and entry.subject_name == ctx.subject_name
+        for entry in history
+    ):
+        weight *= SAME_SUBJECT_PENALTY
+    return weight

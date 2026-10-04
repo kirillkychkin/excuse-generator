@@ -1,11 +1,14 @@
 from datetime import datetime, timedelta
 
+import pytest
+
 from app.enums import RiskLevel, TimeOfDay
 from app.services.generator import (
     ExcuseContext,
     HistoryEntry,
     TemplateData,
     filter_candidates,
+    template_weight,
 )
 
 NOW = datetime(2026, 10, 5, 9, 0)
@@ -113,3 +116,45 @@ class TestFilterCandidates:
 
     def test_empty_templates_give_empty_result(self):
         assert filter_candidates([], make_ctx()) == []
+
+
+class TestTemplateWeight:
+    def test_base_weight_without_history(self):
+        assert template_weight(make_template(1, base_weight=2.0), make_ctx()) == 2.0
+
+    def test_penalizes_recent_theme(self):
+        history = [make_entry(10, theme="health"), make_entry(11, theme="transport")]
+
+        weight = template_weight(make_template(1, theme="transport"), make_ctx(), history)
+
+        assert weight == pytest.approx(0.3)
+
+    def test_old_theme_is_not_penalized(self):
+        history = [make_entry(i, theme="health") for i in (10, 11, 12)]
+        history.append(make_entry(13, theme="transport"))
+
+        weight = template_weight(make_template(1, theme="transport"), make_ctx(), history)
+
+        assert weight == 1.0
+
+    def test_penalizes_template_used_for_same_subject(self):
+        history = [make_entry(i, theme="health") for i in (10, 11, 12)]
+        history.append(make_entry(1, theme="transport", subject_name="Философия"))
+
+        weight = template_weight(make_template(1), make_ctx(subject_name="Философия"), history)
+
+        assert weight == pytest.approx(0.2)
+
+    def test_template_used_for_other_subject_is_not_penalized(self):
+        history = [make_entry(i, theme="health") for i in (10, 11, 12)]
+        history.append(make_entry(1, subject_name="Физика"))
+
+        weight = template_weight(make_template(1), make_ctx(subject_name="Философия"), history)
+
+        assert weight == 1.0
+
+    def _feedback_history(self, *worked_values):
+        """Старые записи по шаблону 1 для другого предмета — влияет только оценка."""
+        history = [make_entry(i, theme="health") for i in (10, 11, 12)]
+        history += [make_entry(1, subject_name="Физика", worked=w) for w in worked_values]
+        return history
